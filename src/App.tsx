@@ -1,74 +1,32 @@
 import React, { useState } from 'react';
-import { Provider } from 'react-redux';
-import { store } from './store';
-import styled from '@emotion/styled';
-import ShiftCalendar from './components/ShiftCalendar';
-import StaffManagement from './components/StaffManagement';
-import TemplateManagement from './components/TemplateManagement';
-import NGShiftSettings from './components/NGShiftSettings';
-import WeeklyPatternSettings from './components/WeeklyPatternSettings';
-import BulkShiftInput from './components/BulkShiftInput';
-import ShiftSummary from './components/ShiftSummary';
-import Header from './components/Header';
+import { Container, Tab, Tabs, Box } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Container } from '@mui/material';
+import ShiftCalendar from './components/ShiftCalendar';
+import StaffManagement from './components/StaffManagement';
 import { ShiftProvider } from './contexts/ShiftContext';
 
-const AppContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1rem;
-`;
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
 
-const Title = styled.h1`
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-`;
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
 
-const Modal = styled.div<{ isVisible: boolean }>`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: ${props => props.isVisible ? 'flex' : 'none'};
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-`;
-
-const ModalContent = styled.div`
-  background: white;
-  padding: 1.5rem;
-  border-radius: 4px;
-  min-width: 400px;
-  max-width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin: 1rem 0;
-`;
-
-const Button = styled.button`
-  padding: 0.5rem 1rem;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-
-  &:hover {
-    background: #45a049;
-  }
-`;
-
-type PanelType = 'staff' | 'template' | 'ngShift' | 'weeklyPattern' | 'bulkInput' | null;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
 
 const theme = createTheme({
   palette: {
@@ -94,93 +52,31 @@ const theme = createTheme({
 });
 
 const App: React.FC = () => {
-  const [activePanel, setActivePanel] = useState<PanelType>(null);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [showSummary, setShowSummary] = useState(false);
+  const [tabValue, setTabValue] = useState(0);
 
-  const handleReset = () => {
-    if (window.confirm('すべてのデータをリセットしてもよろしいですか？')) {
-      localStorage.clear();
-      window.location.reload();
-    }
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleCloseModal = () => {
-    setActivePanel(null);
-  };
-
-  const renderModalContent = () => {
-    switch (activePanel) {
-      case 'staff':
-        return <StaffManagement onClose={handleCloseModal} />;
-      case 'template':
-        return <TemplateManagement onClose={handleCloseModal} />;
-      case 'ngShift':
-        return <NGShiftSettings onClose={handleCloseModal} />;
-      case 'weeklyPattern':
-        return <WeeklyPatternSettings onClose={handleCloseModal} />;
-      case 'bulkInput':
-        return <BulkShiftInput onClose={handleCloseModal} />;
-      default:
-        return null;
-    }
+  const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
   };
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Provider store={store}>
-        <ShiftProvider>
-          <AppContainer>
-            <Title>グループホームシフト表作成ツール</Title>
-            <Header
-              year={selectedYear}
-              month={selectedMonth}
-              onYearChange={setSelectedYear}
-              onMonthChange={setSelectedMonth}
-              onStaffManagement={() => setActivePanel('staff')}
-              onTemplateManagement={() => setActivePanel('template')}
-              onReset={handleReset}
-              onPrint={handlePrint}
-            />
-
-            <ButtonGroup>
-              <Button onClick={() => setActivePanel('ngShift')}>
-                NGシフト設定
-              </Button>
-              <Button onClick={() => setActivePanel('weeklyPattern')}>
-                週単位パターン
-              </Button>
-              <Button onClick={() => setActivePanel('bulkInput')}>
-                一括入力
-              </Button>
-              <Button onClick={() => setShowSummary(!showSummary)}>
-                {showSummary ? '集計を隠す' : '勤務集計を表示'}
-              </Button>
-            </ButtonGroup>
-
-            {showSummary && (
-              <ShiftSummary year={selectedYear} month={selectedMonth} />
-            )}
-
-            <ShiftCalendar year={selectedYear} month={selectedMonth} />
-
-            <Modal 
-              isVisible={activePanel !== null} 
-              onClick={handleCloseModal}
-            >
-              <ModalContent onClick={e => e.stopPropagation()}>
-                {renderModalContent()}
-              </ModalContent>
-            </Modal>
-          </AppContainer>
-        </ShiftProvider>
-      </Provider>
+      <ShiftProvider>
+        <Container maxWidth="lg" sx={{ mt: 4 }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs value={tabValue} onChange={handleChange} aria-label="basic tabs example">
+              <Tab label="シフトカレンダー" />
+              <Tab label="スタッフ管理" />
+            </Tabs>
+          </Box>
+          <TabPanel value={tabValue} index={0}>
+            <ShiftCalendar />
+          </TabPanel>
+          <TabPanel value={tabValue} index={1}>
+            <StaffManagement />
+          </TabPanel>
+        </Container>
+      </ShiftProvider>
     </ThemeProvider>
   );
 };

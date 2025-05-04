@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Box,
   Paper,
-  Typography,
   TextField,
   Button,
   List,
@@ -10,98 +9,64 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   IconButton,
+  Switch,
 } from '@mui/material';
-import { Delete as DeleteIcon, Edit as EditIcon, Save as SaveIcon } from '@mui/icons-material';
+import { Delete as DeleteIcon } from '@mui/icons-material';
 import { useShift } from '../contexts/ShiftContext';
 
-export default function StaffManagement() {
-  const { staff, addStaff, removeStaff, updateStaff } = useShift();
+const StaffManagement: React.FC = () => {
+  const { staff, addStaff, updateStaff, deleteStaff } = useShift();
   const [newStaffName, setNewStaffName] = useState('');
-  const [editingStaff, setEditingStaff] = useState<{ id: string; name: string } | null>(null);
 
-  const handleAddStaff = () => {
+  const handleAddStaff = (e: React.FormEvent) => {
+    e.preventDefault();
     if (newStaffName.trim()) {
       addStaff(newStaffName.trim());
       setNewStaffName('');
     }
   };
 
-  const handleStartEdit = (id: string, name: string) => {
-    setEditingStaff({ id, name });
-  };
-
-  const handleSaveEdit = () => {
-    if (editingStaff) {
-      updateStaff(editingStaff.id, editingStaff.name);
-      setEditingStaff(null);
-    }
-  };
-
   return (
-    <Paper sx={{ p: 2, mb: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        職員管理
-      </Typography>
-      
-      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-        <TextField
-          size="small"
-          label="職員名"
-          value={newStaffName}
-          onChange={(e) => setNewStaffName(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleAddStaff()}
-        />
-        <Button
-          variant="contained"
-          onClick={handleAddStaff}
-          disabled={!newStaffName.trim()}
-        >
-          追加
-        </Button>
-      </Box>
+    <Box>
+      <Paper sx={{ p: 2, mb: 2 }}>
+        <form onSubmit={handleAddStaff}>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TextField
+              value={newStaffName}
+              onChange={(e) => setNewStaffName(e.target.value)}
+              label="スタッフ名"
+              variant="outlined"
+              size="small"
+              fullWidth
+            />
+            <Button type="submit" variant="contained" disabled={!newStaffName.trim()}>
+              追加
+            </Button>
+          </Box>
+        </form>
+      </Paper>
 
-      <List>
-        {staff.map((s) => (
-          <ListItem
-            key={s.id}
-            secondaryAction={
-              <Box>
-                <IconButton
+      <Paper>
+        <List>
+          {staff.map((s) => (
+            <ListItem key={s.id}>
+              <ListItemText primary={s.name} />
+              <ListItemSecondaryAction>
+                <Switch
                   edge="end"
-                  aria-label="edit"
-                  onClick={() => handleStartEdit(s.id, s.name)}
-                >
-                  <EditIcon />
-                </IconButton>
-                <IconButton
-                  edge="end"
-                  aria-label="delete"
-                  onClick={() => removeStaff(s.id)}
-                >
+                  checked={s.isActive}
+                  onChange={(e) => updateStaff(s.id, { isActive: e.target.checked })}
+                />
+                <IconButton edge="end" onClick={() => deleteStaff(s.id)}>
                   <DeleteIcon />
                 </IconButton>
-              </Box>
-            }
-          >
-            {editingStaff?.id === s.id ? (
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <TextField
-                  size="small"
-                  value={editingStaff.name}
-                  onChange={(e) =>
-                    setEditingStaff({ ...editingStaff, name: e.target.value })
-                  }
-                />
-                <IconButton onClick={handleSaveEdit}>
-                  <SaveIcon />
-                </IconButton>
-              </Box>
-            ) : (
-              <ListItemText primary={s.name} />
-            )}
-          </ListItem>
-        ))}
-      </List>
-    </Paper>
+              </ListItemSecondaryAction>
+            </ListItem>
+          ))}
+        </List>
+      </Paper>
+    </Box>
   );
-} 
+};
+
+export default StaffManagement; 
